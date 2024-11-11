@@ -1,0 +1,13 @@
+plots/*
+plots
+resonance_kk_repro
+resonance_kk_repro/*
+__pycache__/*
+data/OptEngNov2017_150cmTargetCone_NoMod2_Antineutrino.tar.gz
+data/OptEngNov2017_150cmTargetCone_NoMod2_Neutrino.tar.gz
+data/result_nuebar.root
+data/result_nue.root
+signal_data/*
+signal_data
+data/1g1e0p/*.root
+data/1em1ep/*.root

@@ -1,0 +1,13 @@
+*.txt filter=lfs diff=lfs merge=lfs -text
+data/1g0p/1ep_nuebar_4vectors_DUNE_bkg.txt filter=lfs diff=lfs merge=lfs -text
+data/1g0p/*.txt filter=lfs diff=lfs merge=lfs -text
+sensitivities/*.txt filter=lfs diff=lfs merge=lfs -text
+data/1em1ep/*.txt filter=lfs diff=lfs merge=lfs -text
+data/2gamma/*.txt filter=lfs diff=lfs merge=lfs -text
+data/*.txt filter=lfs diff=lfs merge=lfs -text
+data/1g1e0p/*.txt filter=lfs diff=lfs merge=lfs -text
+fluxes/* filter=lfs diff=lfs merge=lfs -text
+data/fluxes/positron_DIFF_flux_dPhidE_20210621_TargetSim_QGSP_BIC_AllHP_POT1E6.txt filter=lfs diff=lfs merge=lfs -text
+data/fluxes/dune_target_gamma_1e5POT_2d_sub100mrad_june24.txt filter=lfs diff=lfs merge=lfs -text
+data/fluxes/DUNE_target_photons_2d_sub100mrad_1e6POT.txt filter=lfs diff=lfs merge=lfs -text
+data/fluxes/electron_DIFF_flux_dPhidE_20210621_TargetSim_QGSP_BIC_AllHP_POT1E6.txt filter=lfs diff=lfs merge=lfs -text
