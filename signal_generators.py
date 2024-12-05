@@ -212,6 +212,9 @@ class ElectronALPFromBeam4Vectors(AxionFlux):
         self.axion_flux = []
         self.scatter_axion_weight = []
         self.decay_axion_weight = []
+        
+        n_subsamples = 10
+        min_log10_t = -1
 
         # simulate bremsstrahlung from the electron and positron fluxes!
         ep_min = max(self.ma, M_E)
@@ -223,11 +226,11 @@ class ElectronALPFromBeam4Vectors(AxionFlux):
         epem_flux_mc_vol = np.log(10) * (log10(max(self.electron_flux[:,0])) - log10(ep_min*1.01)) / int(sqrt(self.n_samples))
 
         for el in epem_energy_grid:
-            t_depth = 10**np.random.uniform(-3, np.log10(self.max_t), 10)
-            new_energy = np.random.uniform(ep_min, el, 10)
-            for i in range(10):
+            t_depth = 10**np.random.uniform(min_log10_t, np.log10(self.max_t), n_subsamples)
+            new_energy = np.random.uniform(ep_min, el, n_subsamples)
+            for i in range(n_subsamples):
                 flux_weight = self.electron_positron_flux_attenuated(t_depth[i], el, new_energy[i]) \
-                    * np.log(10) * t_depth[i] * (np.log10(self.max_t*3)) * (el - ep_min) / 10
+                    * np.log(10) * t_depth[i] * (np.log10(self.max_t*min_log10_t)) * (el - ep_min) / n_subsamples
                 self.simulate_brem([new_energy[i], flux_weight*epem_flux_mc_vol], n_samples=int(sqrt(self.n_samples)))
     
         # simulate resonance production and append to arrays
