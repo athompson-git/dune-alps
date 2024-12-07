@@ -230,7 +230,7 @@ class ElectronALPFromBeam4Vectors(AxionFlux):
             new_energy = np.random.uniform(ep_min, el, n_subsamples)
             for i in range(n_subsamples):
                 flux_weight = self.electron_positron_flux_attenuated(t_depth[i], el, new_energy[i]) \
-                    * np.log(10) * t_depth[i] * (np.log10(self.max_t*min_log10_t)) * (el - ep_min) / n_subsamples
+                    * np.log(10) * t_depth[i] * (np.log10(self.max_t*abs(min_log10_t))) * (el - ep_min) / n_subsamples
                 self.simulate_brem([new_energy[i], flux_weight*epem_flux_mc_vol], n_samples=int(sqrt(self.n_samples)))
     
         # simulate resonance production and append to arrays
