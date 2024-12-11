@@ -111,7 +111,6 @@ def run_sens_pair_prod(out_file_name):
             
 
             # apply angular cut
-            rad2deg = np.pi/180.0
             signal_events_acut = signal_events
             ll_acut = np.sum(binned_bkg_acut_aggregate * log(signal_events_acut+binned_bkg_acut_aggregate) - signal_events_acut \
                         - binned_bkg_acut_aggregate - gammaln(binned_bkg_acut_aggregate))  # Poisson log-likelihood
@@ -205,7 +204,7 @@ def run_sens_decay(out_file_name, resume=False):
 def main():
     #plot_alp_spectra(ge=1e-7, ma=10.0)
 
-    run_sens_pair_prod(out_file_name="sensitivities/epem_pp_sensitivity_BKG_cutflow_20240507.txt")
+    run_sens_pair_prod(out_file_name="sensitivities/epem_pp_sensitivity_BKG_cutflow_20241207.txt")
 
 
 if __name__ == "__main__":

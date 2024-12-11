@@ -20,8 +20,8 @@ from decimal import Decimal
 
 def run_sens(out_file_name, resume=False, dump_fluxes=False):
     # Start with loop over parameters (MeV)
-    gagamma_list = np.logspace(-14, 0, 200)
-    ma_list = np.logspace(0, 3, 100)
+    gagamma_list = np.logspace(-14, 0, 100)
+    ma_list = np.logspace(-3, 3, 250)
 
 
     # Import flux info
@@ -91,8 +91,13 @@ def run_sens(out_file_name, resume=False, dump_fluxes=False):
                 resumed = True
                 continue
 
-        flux_gen = PrimakoffFromBeam4Vectors(forward_photon_flux, target=Material("C"), det_dist=DUNE_DIST, det_length=DUNE_LENGTH,
-                            det_area=DUNE_AREA, axion_mass=ma, axion_coupling=1.0, n_samples=100)
+        #flux_gen = PrimakoffFromBeam4Vectors(forward_photon_flux, target=Material("C"), det_dist=DUNE_DIST, det_length=DUNE_LENGTH,
+        #                    det_area=DUNE_AREA, axion_mass=ma, axion_coupling=1.0, n_samples=100)
+        
+        flux_gen = PrimakoffFromBeam4Vectors(forward_dump_gamma_flux, target=Material("Al"), det_dist=DUNE_DUMP_DIST,
+                                                  det_length=DUNE_LENGTH, det_area=DUNE_AREA, axion_mass=ma, axion_coupling=1.0,
+                                                  n_samples=50)
+        
 
         print("Simulating and propagating ALP flux for ma={}...".format(ma))
         flux_gen.simulate(multicore=False)
@@ -108,6 +113,15 @@ def run_sens(out_file_name, resume=False, dump_fluxes=False):
                     resumed = True
 
             flux_gen.propagate(is_isotropic=False, new_coupling=g)
+
+            if ma < 0.5:
+                ll = np.sum(binned_bkg_aggregate * log(0.0 + binned_bkg_aggregate + 1) - 0.0 \
+                        - binned_bkg_aggregate - gammaln(binned_bkg_aggregate+1))  # Poisson log-likelihood
+                file_out = open(out_file_name, "a")
+                file_out.write(str(ma) + " " + str(g) + " " + str(ll) + " " + str(1.0) + " " + str(ll) + \
+                                " " + str(ll) + " " + str(0.0) + '\n')
+                file_out.close()
+                continue
 
             print("flux sum = ", np.sum(flux_gen.decay_axion_weight))
 
@@ -277,7 +291,7 @@ def plot_sensitivity(save_file):
 def main():
     #check_mass_cut_efficiency(500.0)
     
-    run_sens(out_file_name="sensitivities/digamma_sensitivity_BKG_cutflow_updated_fluxes.txt", resume=False, dump_fluxes=False)
+    run_sens(out_file_name="sensitivities/digamma_sensitivity_BKG_cutflow_dump.txt", resume=False, dump_fluxes=False)
     #plot_sensitivity("sensitivities/photon_coupling_sensitivity_BKG_cutflow_20240115.txt")
 
 

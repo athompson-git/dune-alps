@@ -30,6 +30,23 @@ el_diff_flux_dune = np.genfromtxt("../DUNE/data/epem_flux/electron_DIFF_flux_dPh
 el_diff_flux_dune[:,1] *= 1/pot_per_sample  # per POT
 
 
+
+# dump fluxes
+gamma_data_dump = np.genfromtxt("data/escaped_proton/gamma_dump_escapedProton_QGSP_BERT_POT1e2.txt")
+#electron_data_dump = np.genfromtxt("data/escaped_proton/electron_dump_escapedProton_QGSP_BERT_POT1e2.txt")
+#positron_data_dump = np.genfromtxt("data/escaped_proton/positron_dump_escapedProton_QGSP_BERT_POT1e2.txt")
+
+gamma_cosine_dump = gamma_data_dump[:,3] / np.sqrt(gamma_data_dump[:,1]**2 + gamma_data_dump[:,2]**2 + gamma_data_dump[:,3]**2)
+#electron_cosine_dump = electron_data_dump[:,3] / np.sqrt(electron_data_dump[:,1]**2 + electron_data_dump[:,2]**2 + electron_data_dump[:,3]**2)
+#positron_cosine_dump = positron_data_dump[:,3] / np.sqrt(positron_data_dump[:,1]**2 + positron_data_dump[:,2]**2 + positron_data_dump[:,3]**2)
+
+forward_dump_gamma_energies = 1e3*gamma_data_dump[:,0][np.arccos(gamma_cosine_dump) < DUMP_TO_ND_SOLID_ANGLE]
+forward_dump_gamma_angles = np.arccos(gamma_cosine_dump[np.arccos(gamma_cosine_dump) < DUMP_TO_ND_SOLID_ANGLE])
+forward_dump_weights = 0.0425*1e-2*np.ones_like(forward_dump_gamma_energies)
+forward_dump_gamma_flux = np.array([forward_dump_gamma_energies, forward_dump_gamma_angles, forward_dump_weights]).transpose()
+
+
+
 class PrimakoffFromBeam4Vectors(AxionFlux):
     """
     Generator for Primakoff-produced axion flux

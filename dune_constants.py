@@ -19,6 +19,9 @@ DUNE_DIST = 574
 DUNE_SOLID_ANGLE = np.arctan(sqrt(DUNE_AREA / pi) / DUNE_DIST)
 DUNE_POT_PER_YEAR = 1.1e21
 
+# dump constants
+DUNE_DUMP_DIST = 328.0
+DUMP_TO_ND_SOLID_ANGLE = np.arctan(sqrt(DUNE_AREA / pi) / DUNE_DUMP_DIST)
 
 # Colors for plottting
 COLOR_NUE = 'silver'
