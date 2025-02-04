@@ -316,6 +316,17 @@ def decay_alp_gen(input_flux_dat_name=None, input_flux=None,
     alp_flux_angles = input_flux[:,1][mask]
     alp_flux_weights = input_flux[:,2][mask]
 
+    # sort by weight and cut away the bottom 1% of the flux
+    sorted_wgts = alp_flux_weights[np.argsort(alp_flux_weights)]
+    sorted_angles = alp_flux_angles[np.argsort(alp_flux_weights)]
+    sorted_energies = alp_flux_energies[np.argsort(alp_flux_weights)]
+    wgt_cumsum = np.cumsum(sorted_wgts)/np.sum(sorted_wgts)
+
+    alp_flux_energies = sorted_energies[wgt_cumsum > 0.01]
+    alp_flux_angles = sorted_angles[wgt_cumsum > 0.01]
+    alp_flux_weights = sorted_wgts[wgt_cumsum > 0.01]
+
+
     if (len(alp_flux_weights) == 0) or (np.sum(alp_flux_weights)*FLUX_SCALING < 1e-1):
         return np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([])
 
