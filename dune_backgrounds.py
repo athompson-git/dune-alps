@@ -200,11 +200,6 @@ p0_epem_nuebar_1, p1_epem_nuebar_1, p2_epem_nuebar_1, p3_epem_nuebar_1, \
 p0_epem_numubar_1, p1_epem_numubar_1, p2_epem_numubar_1, p3_epem_numubar_1, \
      p0_epem_numubar_2, p1_epem_numubar_2, p2_epem_numubar_2, p3_epem_numubar_2, weights1_numubar_epem = get_2particle_array("data/1em1ep/epem_numubar_4vectors_DUNE_bkg.txt", flavor="numubar", mass_energy=M_E)
 
-inv_mass_epem_nue = sqrt((p0_epem_nue_1 + p0_epem_nue_2)**2 - (p1_epem_nue_1 + p1_epem_nue_2)**2 - (p2_epem_nue_1 + p2_epem_nue_2)**2 - (p3_epem_nue_1 + p3_epem_nue_2)**2)
-inv_mass_epem_numu = sqrt((p0_epem_numu_1 + p0_epem_numu_2)**2 - (p1_epem_numu_1 + p1_epem_numu_2)**2 - (p2_epem_numu_1 + p2_epem_numu_2)**2 - (p3_epem_numu_1 + p3_epem_numu_2)**2)
-inv_mass_epem_nuebar = sqrt((p0_epem_nuebar_1 + p0_epem_nuebar_2)**2 - (p1_epem_nuebar_1 + p1_epem_nuebar_2)**2 - (p2_epem_nuebar_1 + p2_epem_nuebar_2)**2 - (p3_epem_nuebar_1 + p3_epem_nuebar_2)**2)
-inv_mass_epem_numubar = sqrt((p0_epem_numubar_1 + p0_epem_numubar_2)**2 - (p1_epem_numubar_1 + p1_epem_numubar_2)**2 - (p2_epem_numubar_1 + p2_epem_numubar_2)**2 - (p3_epem_numubar_1 + p3_epem_numubar_2)**2)
-
 
 
 # 2 GAMMA
@@ -240,15 +235,4 @@ p0_1g1ep_nuebar_1, p1_1g1ep_nuebar_1, p2_1g1ep_nuebar_1, p3_1g1ep_nuebar_1, \
      p0_1g1ep_nuebar_2, p1_1g1ep_nuebar_2, p2_1g1ep_nuebar_2, p3_1g1ep_nuebar_2, weights1_nuebar_1g1ep = get_2particle_array("data/1g1e0p/epgamma_nuebar_4vectors_DUNE_bkg.txt", flavor="nuebar")
 p0_1g1ep_numubar_1, p1_1g1ep_numubar_1, p2_1g1ep_numubar_1, p3_1g1ep_numubar_1, \
      p0_1g1ep_numubar_2, p1_1g1ep_numubar_2, p2_1g1ep_numubar_2, p3_1g1ep_numubar_2, weights1_numubar_1g1ep = get_2particle_array("data/1g1e0p/epgamma_numubar_4vectors_DUNE_bkg.txt", flavor="numubar")
-
-
-inv_mass_1g1ep_nue = sqrt((p0_1g1ep_nue_1 + p0_1g1ep_nue_2)**2 - (p1_1g1ep_nue_1 + p1_1g1ep_nue_2)**2 - (p2_1g1ep_nue_1 + p2_1g1ep_nue_2)**2 - (p3_1g1ep_nue_1 + p3_1g1ep_nue_2)**2)
-inv_mass_1g1ep_numu = sqrt((p0_1g1ep_numu_1 + p0_1g1ep_numu_2)**2 - (p1_1g1ep_numu_1 + p1_1g1ep_numu_2)**2 - (p2_1g1ep_numu_1 + p2_1g1ep_numu_2)**2 - (p3_1g1ep_numu_1 + p3_1g1ep_numu_2)**2)
-inv_mass_1g1ep_nuebar = sqrt((p0_1g1ep_nuebar_1 + p0_1g1ep_nuebar_2)**2 - (p1_1g1ep_nuebar_1 + p1_1g1ep_nuebar_2)**2 - (p2_1g1ep_nuebar_1 + p2_1g1ep_nuebar_2)**2 - (p3_1g1ep_nuebar_1 + p3_1g1ep_nuebar_2)**2)
-inv_mass_1g1ep_numubar = sqrt((p0_1g1ep_numubar_1 + p0_1g1ep_numubar_2)**2 - (p1_1g1ep_numubar_1 + p1_1g1ep_numubar_2)**2 - (p2_1g1ep_numubar_1 + p2_1g1ep_numubar_2)**2 - (p3_1g1ep_numubar_1 + p3_1g1ep_numubar_2)**2)
-
-inv_mass_1g1em_nue = sqrt((p0_1g1em_nue_1 + p0_1g1em_nue_2)**2 - (p1_1g1em_nue_1 + p1_1g1em_nue_2)**2 - (p2_1g1em_nue_1 + p2_1g1em_nue_2)**2 - (p3_1g1em_nue_1 + p3_1g1em_nue_2)**2)
-inv_mass_1g1em_numu = sqrt((p0_1g1em_numu_1 + p0_1g1em_numu_2)**2 - (p1_1g1em_numu_1 + p1_1g1em_numu_2)**2 - (p2_1g1em_numu_1 + p2_1g1em_numu_2)**2 - (p3_1g1em_numu_1 + p3_1g1em_numu_2)**2)
-inv_mass_1g1em_nuebar = sqrt((p0_1g1em_nuebar_1 + p0_1g1em_nuebar_2)**2 - (p1_1g1em_nuebar_1 + p1_1g1em_nuebar_2)**2 - (p2_1g1em_nuebar_1 + p2_1g1em_nuebar_2)**2 - (p3_1g1em_nuebar_1 + p3_1g1em_nuebar_2)**2)
-inv_mass_1g1em_numubar = sqrt((p0_1g1em_numubar_1 + p0_1g1em_numubar_2)**2 - (p1_1g1em_numubar_1 + p1_1g1em_numubar_2)**2 - (p2_1g1em_numubar_1 + p2_1g1em_numubar_2)**2 - (p3_1g1em_numubar_1 + p3_1g1em_numubar_2)**2)
 
