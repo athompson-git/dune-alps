@@ -87,40 +87,50 @@ class Background2Particle:
         if nu_flavor not in ["nue", "numu", "nuebar", "numubar"]:
             raise Exception("nu flavor not in {}!".format(["nue", "numu", "nuebar", "numubar"]))
         
-        bkg = np.genfromtxt(data_file_name)
-        bkg *= 1.0e3  # convert to MeV
-        p0_1 = bkg[:,0] + mass_particle_1
-        p1_1 = bkg[:,1]
-        p2_1 = bkg[:,2]
-        p3_1 = bkg[:,3]
-        p0_2 = bkg[:,4] + mass_particle_2
-        p1_2 = bkg[:,5]
-        p2_2 = bkg[:,6]
-        p3_2 = bkg[:,7]
+        try:
+            bkg = np.genfromtxt(data_file_name)
+            bkg *= 1.0e3  # convert to MeV
+            p0_1 = bkg[:,0] + mass_particle_1
+            p1_1 = bkg[:,1]
+            p2_1 = bkg[:,2]
+            p3_1 = bkg[:,3]
+            p0_2 = bkg[:,4] + mass_particle_2
+            p1_2 = bkg[:,5]
+            p2_2 = bkg[:,6]
+            p3_2 = bkg[:,7]
 
-        p_mag_1 = sqrt(p1_1*p1_1 + p2_1*p2_1 + p3_1*p3_1)
-        p_mag_2 = sqrt(p1_2*p1_2 + p2_2*p2_2 + p3_2*p3_2)
-        p1_dot_p2 = p1_1*p1_2 + p2_1*p2_2 + p3_1*p3_2
+            p_mag_1 = sqrt(p1_1*p1_1 + p2_1*p2_1 + p3_1*p3_1)
+            p_mag_2 = sqrt(p1_2*p1_2 + p2_2*p2_2 + p3_2*p3_2)
+            p1_dot_p2 = p1_1*p1_2 + p2_1*p2_2 + p3_1*p3_2
 
-        self.dtheta_deg = 180.0 * arccos(p1_dot_p2 / abs(p_mag_1*p_mag_2)) / pi
-        self.dtheta_rad = arccos(p1_dot_p2 / abs(p_mag_1*p_mag_2))
+            self.dtheta_deg = 180.0 * arccos(p1_dot_p2 / abs(p_mag_1*p_mag_2)) / pi
+            self.dtheta_rad = arccos(p1_dot_p2 / abs(p_mag_1*p_mag_2))
 
-        self.inv_mass = np.sqrt((p0_1+p0_2)**2 - (p1_1 + p1_2)**2 - (p2_1 + p2_2)**2 - (p3_1 + p3_2)**2)
-        self.total_energy = p0_1 + p0_2
-        self.energy_p1 = p0_1
-        self.energy_p2 = p0_2
-    
-        nu_energy = bkg[:,8]
-        if nu_flavor == "numu":
-            weights = numu_events(nu_energy) * np.heaviside(self.dtheta_deg - 1.0, 0.0)
-        elif nu_flavor == "nue":
-            weights = nue_events(nu_energy) * np.heaviside(self.dtheta_deg - 1.0, 0.0)
-        elif nu_flavor == "numubar":
-            weights = numubar_events(nu_energy) * np.heaviside(self.dtheta_deg - 1.0, 0.0)
-        elif nu_flavor == "nuebar":
-            weights = nuebar_events(nu_energy) * np.heaviside(self.dtheta_deg - 1.0, 0.0)
+            self.inv_mass = np.sqrt((p0_1+p0_2)**2 - (p1_1 + p1_2)**2 - (p2_1 + p2_2)**2 - (p3_1 + p3_2)**2)
+            self.total_energy = p0_1 + p0_2
+            self.energy_p1 = p0_1
+            self.energy_p2 = p0_2
         
-        self.weights = weights
+            nu_energy = bkg[:,8]
+            if nu_flavor == "numu":
+                weights = numu_events(nu_energy) * np.heaviside(self.dtheta_deg - 1.0, 0.0)
+            elif nu_flavor == "nue":
+                weights = nue_events(nu_energy) * np.heaviside(self.dtheta_deg - 1.0, 0.0)
+            elif nu_flavor == "numubar":
+                weights = numubar_events(nu_energy) * np.heaviside(self.dtheta_deg - 1.0, 0.0)
+            elif nu_flavor == "nuebar":
+                weights = nuebar_events(nu_energy) * np.heaviside(self.dtheta_deg - 1.0, 0.0)
+            
+            self.weights = weights
+        
+        except:
+            self.total_energy = np.array([-1])
+            self.inv_mass = np.array([-1])
+            self.energy_p1 = np.array([-1])
+            self.energy_p2 = np.array([-1])
+            self.dtheta_deg = np.array([-1])
+            self.dtheta_rad = np.array([-1])
+            self.weights = np.array([0])
 
 
 class Background1Particle:
@@ -128,29 +138,39 @@ class Background1Particle:
         if nu_flavor not in ["nue", "numu", "nuebar", "numubar"]:
             raise Exception("nu flavor not in {}!".format(["nue", "numu", "nuebar", "numubar"]))
         
-        bkg = np.genfromtxt(data_file_name)
-        bkg *= 1.0e3  # convert to MeV
-        self.p0_1 = bkg[:,0] + mass_particle_1
-        self.p1_1 = bkg[:,1]
-        self.p2_1 = bkg[:,2]
-        self.p3_1 = bkg[:,3]
+        try:
+            bkg = np.genfromtxt(data_file_name)
+            bkg *= 1.0e3  # convert to MeV
+            self.p0_1 = bkg[:,0] + mass_particle_1
+            self.p1_1 = bkg[:,1]
+            self.p2_1 = bkg[:,2]
+            self.p3_1 = bkg[:,3]
 
-        p_mag_1 = sqrt(self.p1_1*self.p1_1 + self.p2_1*self.p2_1 + self.p3_1*self.p3_1)
+            p_mag_1 = sqrt(self.p1_1*self.p1_1 + self.p2_1*self.p2_1 + self.p3_1*self.p3_1)
 
-        self.theta_z_deg = 180.0 * arccos(self.p3_1 / p_mag_1) / pi
-        self.theta_z_rad = arccos(self.p3_1 / p_mag_1)
+            self.theta_z_deg = 180.0 * arccos(self.p3_1 / p_mag_1) / pi
+            self.theta_z_rad = arccos(self.p3_1 / p_mag_1)
 
-        nu_energy = bkg[:,4]
-        if nu_flavor == "numu":
-            weights = numu_events(nu_energy)
-        elif nu_flavor == "nue":
-            weights = nue_events(nu_energy)
-        elif nu_flavor == "numubar":
-            weights = numubar_events(nu_energy)
-        elif nu_flavor == "nuebar":
-            weights = nuebar_events(nu_energy)
+            nu_energy = bkg[:,4]
+            if nu_flavor == "numu":
+                weights = numu_events(nu_energy)
+            elif nu_flavor == "nue":
+                weights = nue_events(nu_energy)
+            elif nu_flavor == "numubar":
+                weights = numubar_events(nu_energy)
+            elif nu_flavor == "nuebar":
+                weights = nuebar_events(nu_energy)
+            
+            self.weights = weights
         
-        self.weights = weights
+        except:
+            self.p0_1 = np.array([-1])
+            self.p1_1 = np.array([-1])
+            self.p2_1 = np.array([-1])
+            self.p3_1 = np.array([-1])
+            self.theta_z_deg = np.array([-1])
+            self.theta_z_rad = np.array([-1])
+            self.weights = np.array([0])
 
 
 
