@@ -32,39 +32,9 @@ COLOR_NUMUBAR = 'rosybrown'
 
 FLUX_SCALING = EXPOSURE_DAYS*S_PER_DAY * (DUNE_POT_PER_YEAR / 365.0 / S_PER_DAY)  # gets (exposure in s) * (# / s)
 E2GAMMA_MISID = 0.18
+E2GAMMA_2PARTICLE_MISID = 0.2952
 
 NU_MU_REWGT = (EXPOSURE_YEARS/3.5) * (2.593e8 + 8.922e7)/1e7  # based on 3.5 year reweighting
 NU_MUBAR_REWGT = (EXPOSURE_YEARS/3.5) * (1.203e7 + 5.169e6)/1e7
 NU_E_REWGT = (EXPOSURE_YEARS/3.5) * (3.586e6 + 1.196e6)/1e7
 NU_EBAR_REWGT = (EXPOSURE_YEARS/3.5) * (4.65018e5 + 1.93872e5)/1e7
-
-
-"""
-Zahra's numbers (CC)
-events\[Nu]\[Mu]CC\[Nu]Beam = 2.593`*^8
-events\[Nu]Bar\[Mu]CC\[Nu]Beam = 1.203`*^7
-events\[Nu]eCC\[Nu]Beam=3.586*10^6
-events\[Nu]BareCC\[Nu]Beam = 465018.
-eventsCC\[Nu]BeamTotal = 2.754`*^8
-
-events\[Nu]\[Mu]CC\[Nu]BarBeam = 3.404`*^7
-events\[Nu]Bar\[Mu]CC\[Nu]BarBeam = 7.979`*^7
-events\[Nu]eCC\[Nu]BarBeam = 1.697`*^6
-events\[Nu]BareCC\[Nu]BarBeam = 1.035`*^6
-eventsCC\[Nu]BarBeamTotal = 1.165`*^8
-
-where \[Nu](Bar)Beam at the end of each expression means running in the nu mode or nu-bar mode, while the numbers for the NC events are:
-
-events\[Nu]\[Mu]NC\[Nu]Beam = 8.922`*^7
-events\[Nu]Bar\[Mu]NC\[Nu]Beam = 5.169`*^6
-events\[Nu]eNC\[Nu]Beam = 1.196`*^6
-events\[Nu]BareNC\[Nu]Beam = 193872.855
-eventsNC\[Nu]BeamTotal = 9.578`*^7
-
-events\[Nu]\[Mu]NC\[Nu]BarBeam = 1.138`*^7
-events\[Nu]Bar\[Mu]NC\[Nu]BarBeam = 3.74`*^7
-events\[Nu]eNC\[Nu]BarBeam = 555294.986
-events\[Nu]BareNC\[Nu]BarBeam = 452460.598
-eventsNC\[Nu]BarBeamTotal = 4.98`*^7
-
-"""
