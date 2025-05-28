@@ -68,22 +68,22 @@ def get_2particle_array(datfile, flavor="numu", mass_energy=0.0, efficiency=1.0)
 
     dtheta_deg = 180.0 * arccos(p1_dot_p2 / abs(p_mag_1*p_mag_2)) / pi
 
-    nu_energy = bkg[:,8]
     if flavor == "numu":
-        weights = numu_events(nu_energy) * np.heaviside(dtheta_deg - 1.0, 0.0)
+        weights = NU_MU_REWGT * np.heaviside(dtheta_deg - 1.0, 0.0)
     elif flavor == "nue":
-        weights = nue_events(nu_energy) * np.heaviside(dtheta_deg - 1.0, 0.0)
+        weights = NU_E_REWGT * np.heaviside(dtheta_deg - 1.0, 0.0)
     elif flavor == "numubar":
-        weights = numubar_events(nu_energy) * np.heaviside(dtheta_deg - 1.0, 0.0)
+        weights = NU_MUBAR_REWGT * np.heaviside(dtheta_deg - 1.0, 0.0)
     elif flavor == "nuebar":
-        weights = nuebar_events(nu_energy) * np.heaviside(dtheta_deg - 1.0, 0.0)
+        weights = NU_EBAR_REWGT * np.heaviside(dtheta_deg - 1.0, 0.0)
     return p0_1, p1_1, p2_1, p3_1, p0_2, p1_2, p2_2, p3_2, weights*efficiency
 
 
 
 # TODO: finish background class
 class Background2Particle:
-    def __init__(self, data_file_name, nu_flavor, mass_particle_1=0.0, mass_particle_2=0.0):
+    def __init__(self, data_file_name, nu_flavor, mass_particle_1=0.0, mass_particle_2=0.0,
+                 verbose=False):
         if nu_flavor not in ["nue", "numu", "nuebar", "numubar"]:
             raise Exception("nu flavor not in {}!".format(["nue", "numu", "nuebar", "numubar"]))
         
@@ -99,6 +99,9 @@ class Background2Particle:
             p2_2 = bkg[:,6]
             p3_2 = bkg[:,7]
 
+            if verbose:
+                print("Declared bkg arrays")
+
             p_mag_1 = sqrt(p1_1*p1_1 + p2_1*p2_1 + p3_1*p3_1)
             p_mag_2 = sqrt(p1_2*p1_2 + p2_2*p2_2 + p3_2*p3_2)
             p1_dot_p2 = p1_1*p1_2 + p2_1*p2_2 + p3_1*p3_2
@@ -110,17 +113,27 @@ class Background2Particle:
             self.total_energy = p0_1 + p0_2
             self.energy_p1 = p0_1
             self.energy_p2 = p0_2
-        
-            nu_energy = bkg[:,8]
-            if nu_flavor == "numu":
-                weights = numu_events(nu_energy) * np.heaviside(self.dtheta_deg - 1.0, 0.0)
-            elif nu_flavor == "nue":
-                weights = nue_events(nu_energy) * np.heaviside(self.dtheta_deg - 1.0, 0.0)
-            elif nu_flavor == "numubar":
-                weights = numubar_events(nu_energy) * np.heaviside(self.dtheta_deg - 1.0, 0.0)
-            elif nu_flavor == "nuebar":
-                weights = nuebar_events(nu_energy) * np.heaviside(self.dtheta_deg - 1.0, 0.0)
+
+            self.total_p1 = p1_1 + p1_2
+            self.total_p2 = p2_1 + p2_2
+            self.total_p3 = p3_1 + p3_2
+            self.theta_12_deg = arccos(self.total_p3 / sqrt(self.total_p1**2 + self.total_p2**2 + self.total_p3**2)) * 180.0 / pi
+            self.theta_12_rad = arccos(self.total_p3 / sqrt(self.total_p1**2 + self.total_p2**2 + self.total_p3**2))
             
+            if verbose:
+                print("Calculated bkg arrays")
+        
+            if nu_flavor == "numu":
+                weights = NU_MU_REWGT * np.heaviside(self.dtheta_deg - 1.0, 0.0)
+            elif nu_flavor == "nue":
+                weights = NU_E_REWGT * np.heaviside(self.dtheta_deg - 1.0, 0.0)
+            elif nu_flavor == "numubar":
+                weights = NU_MUBAR_REWGT * np.heaviside(self.dtheta_deg - 1.0, 0.0)
+            elif nu_flavor == "nuebar":
+                weights = NU_EBAR_REWGT * np.heaviside(self.dtheta_deg - 1.0, 0.0)
+            
+            if verbose:
+                print("Calculated weights")
             self.weights = weights
         
         except:
@@ -151,15 +164,14 @@ class Background1Particle:
             self.theta_z_deg = 180.0 * arccos(self.p3_1 / p_mag_1) / pi
             self.theta_z_rad = arccos(self.p3_1 / p_mag_1)
 
-            nu_energy = bkg[:,4]
             if nu_flavor == "numu":
-                weights = numu_events(nu_energy)
+                weights = NU_MU_REWGT * np.ones_like(bkg[:,0])
             elif nu_flavor == "nue":
-                weights = nue_events(nu_energy)
+                weights = NU_E_REWGT * np.ones_like(bkg[:,0])
             elif nu_flavor == "numubar":
-                weights = numubar_events(nu_energy)
+                weights = NU_MUBAR_REWGT * np.ones_like(bkg[:,0])
             elif nu_flavor == "nuebar":
-                weights = nuebar_events(nu_energy)
+                weights = NU_EBAR_REWGT * np.ones_like(bkg[:,0])
             
             self.weights = weights
         
@@ -170,10 +182,22 @@ class Background1Particle:
             self.p3_1 = np.array([-1])
             self.theta_z_deg = np.array([-1])
             self.theta_z_rad = np.array([-1])
-            self.weights = np.array([0])
+            self.weights = np.array([0.0])
+    
+    def append_other_bkg(self, other_bkg):
+        if not isinstance(other_bkg, Background1Particle):
+            raise Exception("other_bkg must be an instance of Background1Particle")
+        
+        self.p0_1 = np.concatenate((self.p0_1, other_bkg.p0_1))
+        self.p1_1 = np.concatenate((self.p1_1, other_bkg.p1_1))
+        self.p2_1 = np.concatenate((self.p2_1, other_bkg.p2_1))
+        self.p3_1 = np.concatenate((self.p3_1, other_bkg.p3_1))
+        self.theta_z_deg = np.concatenate((self.theta_z_deg, other_bkg.theta_z_deg))
+        self.theta_z_rad = np.concatenate((self.theta_z_rad, other_bkg.theta_z_rad))
+        self.weights = np.concatenate((self.weights, other_bkg.weights))
 
 
-
+"""
 # SINGLE GAMMA, SINGLE ELECTRON, SINGLE POSITRON
 p0_g_nue, p1_g_nue, p2_g_nue, p3_g_nue, weights1_nue_g = get_1particle_array("data/1g0p/1gamma_nue_4vectors_DUNE_bkg.txt", flavor="nue")
 p0_em_nue, p1_em_nue, p2_em_nue, p3_em_nue, weights1_nue_em = get_1particle_array("data/1g0p/1em_nue_4vectors_DUNE_bkg.txt", flavor="nue")
@@ -256,3 +280,4 @@ p0_1g1ep_nuebar_1, p1_1g1ep_nuebar_1, p2_1g1ep_nuebar_1, p3_1g1ep_nuebar_1, \
 p0_1g1ep_numubar_1, p1_1g1ep_numubar_1, p2_1g1ep_numubar_1, p3_1g1ep_numubar_1, \
      p0_1g1ep_numubar_2, p1_1g1ep_numubar_2, p2_1g1ep_numubar_2, p3_1g1ep_numubar_2, weights1_numubar_1g1ep = get_2particle_array("data/1g1e0p/epgamma_numubar_4vectors_DUNE_bkg.txt", flavor="numubar")
 
+"""
