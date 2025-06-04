@@ -1,5 +1,6 @@
 import numpy as np
 from numpy import sqrt, log, pi
+from numpy.random import standard_cauchy
 
 from scipy.interpolate import interp1d
 
@@ -80,7 +81,23 @@ def get_2particle_array(datfile, flavor="numu", mass_energy=0.0, efficiency=1.0)
 
 
 
-# TODO: finish background class
+
+# Energy resolution
+def dune_eres_cauchy(E_true):
+    # Takes Etrue in MeV, returns reco energies
+    a, b, c = 0.027, 0.024, 0.007
+
+    # Calculate relative energy error, fit inspired by [2503.04432]
+    gamma = E_true * (a * (E_true * 1e-3) + b * sqrt(E_true * 1e-3) + c)
+
+    # Cauchy distribution Quantile function
+    u_rnd = np.random.uniform(0.0, 1.0, E_true.shape[0])
+    E_reco = E_true + gamma * tan(pi * (u_rnd - 0.5))
+
+    return E_reco
+
+
+
 class Background2Particle:
     def __init__(self, data_file_name, nu_flavor, mass_particle_1=0.0, mass_particle_2=0.0,
                  verbose=False):
@@ -99,11 +116,25 @@ class Background2Particle:
             p2_2 = bkg[:,6]
             p3_2 = bkg[:,7]
 
+            # Apply energy resolution effects
+            p_mag_1 = sqrt(p1_1*p1_1 + p2_1*p2_1 + p3_1*p3_1)
+            p_mag_2 = sqrt(p1_2*p1_2 + p2_2*p2_2 + p3_2*p3_2)
+
+            p1_1 = dune_eres_cauchy(p_mag_1) * (p1_1 / p_mag_1)
+            p2_1 = dune_eres_cauchy(p_mag_1) * (p2_1 / p_mag_1)
+            p3_1 = dune_eres_cauchy(p_mag_1) * (p3_1 / p_mag_1)
+            p_mag_1 = sqrt(p1_1*p1_1 + p2_1*p2_1 + p3_1*p3_1)
+            p0_1 = np.sqrt(p_mag_1**2 + mass_particle_1**2)
+
+            p1_2 = dune_eres_cauchy(p_mag_2) * (p1_2 / p_mag_2)
+            p2_2 = dune_eres_cauchy(p_mag_2) * (p2_2 / p_mag_2)
+            p3_2 = dune_eres_cauchy(p_mag_2) * (p3_2 / p_mag_2)
+            p_mag_2 = sqrt(p1_2*p1_2 + p2_2*p2_2 + p3_2*p3_2)
+            p0_2 = np.sqrt(p_mag_2**2 + mass_particle_2**2)
+
             if verbose:
                 print("Declared bkg arrays")
 
-            p_mag_1 = sqrt(p1_1*p1_1 + p2_1*p2_1 + p3_1*p3_1)
-            p_mag_2 = sqrt(p1_2*p1_2 + p2_2*p2_2 + p3_2*p3_2)
             p1_dot_p2 = p1_1*p1_2 + p2_1*p2_2 + p3_1*p3_2
 
             self.dtheta_deg = 180.0 * arccos(p1_dot_p2 / abs(p_mag_1*p_mag_2)) / pi
@@ -144,6 +175,18 @@ class Background2Particle:
             self.dtheta_deg = np.array([-1])
             self.dtheta_rad = np.array([-1])
             self.weights = np.array([0])
+    
+    def append_other_bkg(self, other_bkg):
+        if not isinstance(other_bkg, Background2Particle):
+            raise Exception("other_bkg must be an instance of Background2Particle")
+        
+        self.total_energy = np.concatenate((self.total_energy, other_bkg.total_energy))
+        self.inv_mass = np.concatenate((self.inv_mass, other_bkg.inv_mass))
+        self.energy_p1 = np.concatenate((self.energy_p1, other_bkg.energy_p1))
+        self.energy_p2 = np.concatenate((self.energy_p2, other_bkg.energy_p2))
+        self.dtheta_deg = np.concatenate((self.dtheta_deg, other_bkg.dtheta_deg))
+        self.dtheta_rad = np.concatenate((self.dtheta_rad, other_bkg.dtheta_rad))
+        self.weights = np.concatenate((self.weights, other_bkg.weights))
 
 
 class Background1Particle:
@@ -160,6 +203,12 @@ class Background1Particle:
             self.p3_1 = bkg[:,3]
 
             p_mag_1 = sqrt(self.p1_1*self.p1_1 + self.p2_1*self.p2_1 + self.p3_1*self.p3_1)
+
+            self.p1_1 = dune_eres_cauchy(p_mag_1) * (self.p1_1 / p_mag_1)
+            self.p2_1 = dune_eres_cauchy(p_mag_1) * (self.p2_1 / p_mag_1)
+            self.p3_1 = dune_eres_cauchy(p_mag_1) * (self.p3_1 / p_mag_1)
+            p_mag_1 = sqrt(self.p1_1*self.p1_1 + self.p2_1*self.p2_1 + self.p3_1*self.p3_1)
+            self.p0_1 = np.sqrt(p_mag_1**2 + mass_particle_1**2)
 
             self.theta_z_deg = 180.0 * arccos(self.p3_1 / p_mag_1) / pi
             self.theta_z_rad = arccos(self.p3_1 / p_mag_1)
