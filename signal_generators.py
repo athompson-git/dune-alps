@@ -47,6 +47,32 @@ forward_dump_gamma_flux = np.array([forward_dump_gamma_energies, forward_dump_ga
 
 
 
+
+# Energy resolution
+def dune_eres_cauchy(E_true, distribution="gaussian"):
+    # Takes Etrue in MeV, returns reco energies
+    a, b, c = 0.027, 0.024, 0.007
+
+    # Calculate relative energy error, fit inspired by [2503.04432]
+    # modified to asymptote to 2% beyond 1 GeV (optimistic)
+    gamma = E_true * (a + b / sqrt(E_true * 1e-3) + c/(E_true * 1e-3)) / 3
+
+    # Cauchy distribution Quantile function
+    if hasattr(E_true, "__len__"):
+        u_rnd = np.random.uniform(0.0, 1.0, E_true.shape[0])
+    else:
+        u_rnd = np.random.uniform(0.0, 1.0)
+
+    if distribution == "gaussian=":
+        E_reco = E_true + gamma * sqrt(2) * erfinv(2*u_rnd - 1)
+    elif distribution == "cauchy":
+        E_reco = E_true + gamma * tan(pi * (u_rnd - 0.5))
+
+    return E_reco
+
+
+
+
 class PrimakoffFromBeam4Vectors(AxionFlux):
     """
     Generator for Primakoff-produced axion flux
@@ -176,6 +202,9 @@ class ElectronALPFromBeam4Vectors(AxionFlux):
         self.support = np.ones(n_samples)
         self.max_t = max_track_length
         self.flux_interp = flux_interpolation
+
+        self.res_flux_wgt = []
+        self.brem_flux_wgt = []
     
     def electron_flux_dN_dE(self, energy):
         if self.flux_interp == "log":
@@ -191,11 +220,11 @@ class ElectronALPFromBeam4Vectors(AxionFlux):
         
         return np.interp(energy, self.positron_flux[:,0], self.positron_flux[:,1], left=0.0, right=0.0)
 
-    def positron_flux_attenuated(self, t, E0, E1):
-        return self.positron_flux_dN_dE(E0) * track_length_prob(E0, E1, t)
+    def positron_flux_attenuated(self, E0, E1):
+        return self.positron_flux_dN_dE(E0) * track_length_integrated_prob(E0, E1, self.max_t)
 
-    def electron_positron_flux_attenuated(self, t, E0, E1):
-        return (self.electron_flux_dN_dE(E0) + self.positron_flux_dN_dE(E0)) * track_length_prob(E0, E1, t)
+    def electron_positron_flux_attenuated(self, E0, E1):
+        return (self.electron_flux_dN_dE(E0) + self.positron_flux_dN_dE(E0)) * track_length_integrated_prob(E0, E1, self.max_t)
     
     def resonance_peak(self):
         return 2*pi*M_E*power(self.ge / self.ma, 2) / sqrt(1 - power(2*M_E/self.ma, 2))
@@ -222,6 +251,7 @@ class ElectronALPFromBeam4Vectors(AxionFlux):
         self.axion_energy.extend(ea_rnd)
         self.axion_angle.extend(theta_rnd)
         self.axion_flux.extend(el_wgt * diff_br)
+        self.brem_flux_wgt.extend(el_wgt * diff_br)
     
     def simulate(self):
         self.axion_energy = []
@@ -229,10 +259,9 @@ class ElectronALPFromBeam4Vectors(AxionFlux):
         self.axion_flux = []
         self.scatter_axion_weight = []
         self.decay_axion_weight = []
+        self.res_flux_wgt = []
+        self.brem_flux_wgt = []
         
-        n_subsamples = 10
-        min_log10_t = -1
-
         # simulate bremsstrahlung from the electron and positron fluxes!
         ep_min = max(self.ma, M_E)
         if ep_min > max(self.electron_flux[:,0]):
@@ -243,13 +272,10 @@ class ElectronALPFromBeam4Vectors(AxionFlux):
         epem_flux_mc_vol = np.log(10) * (log10(max(self.electron_flux[:,0])) - log10(ep_min*1.01)) / int(sqrt(self.n_samples))
 
         for el in epem_energy_grid:
-            t_depth = 10**np.random.uniform(min_log10_t, np.log10(self.max_t), n_subsamples)
-            new_energy = np.random.uniform(ep_min, el, n_subsamples)
-            for i in range(n_subsamples):
-                flux_weight = self.electron_positron_flux_attenuated(t_depth[i], el, new_energy[i]) \
-                    * np.log(10) * t_depth[i] * (np.log10(self.max_t*abs(min_log10_t))) * (el - ep_min) / n_subsamples
-                self.simulate_brem([new_energy[i], flux_weight*epem_flux_mc_vol], n_samples=int(sqrt(self.n_samples)))
-    
+            new_energy = np.random.uniform(ep_min, el)
+            flux_weight = (el - ep_min) * self.electron_positron_flux_attenuated(el, new_energy)                
+            self.simulate_brem([new_energy, flux_weight*epem_flux_mc_vol], n_samples=int(sqrt(self.n_samples)))
+
         # simulate resonance production and append to arrays
         resonant_energy = -M_E + self.ma**2 / (2 * M_E)
         if resonant_energy + M_E < self.ma:
@@ -262,15 +288,17 @@ class ElectronALPFromBeam4Vectors(AxionFlux):
             return
 
         e_rnd = np.random.uniform(resonant_energy, max(self.positron_flux[:,0]), self.n_samples)
-        t_rnd = np.random.uniform(0.0, self.max_t, self.n_samples)
-        mc_vol = self.max_t*(max(self.positron_flux[:,0]) - resonant_energy)
+        mc_vol = (max(self.positron_flux[:,0]) - resonant_energy)
 
-        attenuated_flux = mc_vol*np.sum(self.positron_flux_attenuated(t_rnd, e_rnd, resonant_energy))/self.n_samples
+        positron_dist_wgts = np.array([self.positron_flux_attenuated(E1, resonant_energy) for E1 in e_rnd])
+
+        attenuated_flux = mc_vol*np.sum(positron_dist_wgts)/self.n_samples
         wgt = self.target_z * (self.ntarget_area_density * HBARC**2) * self.resonance_peak() * attenuated_flux
 
         self.axion_energy.append(self.ma**2 / (2 * M_E))
         self.axion_angle.append(self.det_sa()/2)
         self.axion_flux.append(wgt)
+        self.res_flux_wgt.append(wgt)
 
     def propagate(self, new_coupling=None, is_isotropic=True):
         if new_coupling is not None:
@@ -282,6 +310,102 @@ class ElectronALPFromBeam4Vectors(AxionFlux):
             geom_accept = self.det_area / (4*pi*self.det_dist**2)
             self.decay_axion_weight *= geom_accept
             self.scatter_axion_weight *= geom_accept
+
+
+
+
+# Pion production using gluon coupling
+class AxionMesonMixingFlux(AxionFlux):
+    """
+    Axion flux to simulate pion and eta mixing ALP production
+    Kelly, Kumar, Liu 2011.05995 inspired
+    axion_coupling is f_a in MeV
+    """
+    def __init__(self, meson_flux=None, meson_mass=M_PI0, target=Material("C"),
+                 det_dist=DUNE_DIST, det_length=DUNE_LENGTH, det_area=DUNE_AREA,
+                 axion_mass=0.1, f_a=1000.0, meson_type="Pi0", total_pot=DUNE_POT_PER_YEAR,
+                 n_samples=1, mesons_per_pot=2.89, c1=1.0, c2=1.0, c3=1.0):
+        # set the coupling (photon coupling)
+        self.c1 = c1
+        self.c2 = c2
+        self.c3 = c3
+        self.f_a = f_a
+
+        super().__init__(axion_mass, target, det_dist, det_length, det_area)
+        self.axion_coupling = self.photon_coupling()
+
+        self.meson_flux = meson_flux
+        self.n_samples = n_samples
+        self.support = np.ones(n_samples)
+        self.meson_mass = meson_mass
+        self.mesons_per_pot = mesons_per_pot
+        self.total_pot = total_pot
+        self.meson_norm_wgt = 1.0/meson_flux.shape[0]
+        self.meson_type = meson_type
+    
+    def photon_coupling(self):
+        if self.ma > 150.0:
+            c_gamma = self.c2 + (5/3)*self.c1
+            return c_gamma * ALPHA / (2 * pi * self.f_a)  # in MeV^-1
+        
+        # ma < QCD scale
+        c_gamma = self.c2 + (5/3)*self.c1 + self.c3 * (
+            -1.92
+            + (1/3) * (self.ma**2 / (self.ma**2 - M_PI0**2))
+            + (8/9) * ((self.ma**2 - (4/9)*M_PI0**2) / (self.ma**2 - M_ETA**2))
+            + (7/9) * ((self.ma**2 - (16/9)*M_PI0**2) / (self.ma**2 - M_ETA_PRIME**2))
+        )
+
+        return c_gamma * ALPHA / (2 * pi * self.f_a)  # in MeV^-1
+
+    def set_new_coupling(self, f_a):
+        self.f_a = f_a
+        self.axion_coupling = self.photon_coupling()
+
+    def mixing(self):
+        if self.meson_type == "Pi0":
+            return (1/6) * (F_PI/self.f_a) * (self.ma**2 / (self.ma**2 - M_PI0**2))
+        elif self.meson_type == "Eta":
+            return (1/sqrt(6)) * (F_PI/self.f_a) * ((self.ma**2 - 4*M_PI0**2 / 9) / (self.ma**2 - M_ETA**2))
+
+    def phase_space_factor(self):
+        if self.ma <= self.meson_mass:
+            return 1.0
+        return np.power(self.ma / self.meson_mass, -1.6)
+
+    def simulate(self):
+        self.axion_energy = []
+        self.axion_angle = []
+        self.axion_flux = []
+        self.scatter_axion_weight = []
+        self.decay_axion_weight = []
+
+        for m in self.meson_flux:
+            if m[0] < self.ma:
+                continue
+
+            meson_angle = np.arccos(m[3]/sqrt(m[1]**2 + m[2]**2 + m[3]**2))
+
+            if meson_angle > self.det_sa():
+                continue
+
+            self.axion_energy.append(m[0])
+            self.axion_angle.append(meson_angle)
+
+            rate = self.total_pot * self.mesons_per_pot * self.meson_norm_wgt \
+                * self.phase_space_factor() * (self.mixing())**2
+            
+            self.axion_flux.append(rate)
+
+    def propagate(self, new_fa=None):
+        if new_fa is not None:
+            rescale=power(self.f_a/new_fa, 2)
+            self.set_new_coupling(new_fa)
+            super().propagate(W_gg(self.photon_coupling(), self.ma), rescale)
+        else:
+            super().propagate(W_gg(self.axion_coupling, self.ma))
+
+
 
 
 
@@ -342,6 +466,25 @@ def decay_alp_gen(input_flux_dat_name=None, input_flux=None,
         wgts = mc.weights
         fv2 = mc.p2_lab_4vectors
         fv1 = mc.p1_lab_4vectors
+
+        # Apply energy smearing
+        for i in range(mc.weights.shape[0]):
+            true_p_1 = fv1[i].momentum()
+            reco_p_1 = dune_eres_cauchy(true_p_1)
+            reco_p1_1 = reco_p_1 * (fv1[i].p1 / true_p_1)
+            reco_p2_1 = reco_p_1 * (fv1[i].p2 / true_p_1)
+            reco_p3_1 = reco_p_1 * (fv1[i].p3 / true_p_1)
+            reco_p0_1 = sqrt(reco_p1_1**2 + reco_p2_1**2 + reco_p3_1**2 + mass_daughters**2)
+            fv1[i].set_p4(reco_p0_1, reco_p1_1, reco_p2_1, reco_p3_1)
+
+            true_p_2 = fv2[i].momentum()
+            reco_p_2 = dune_eres_cauchy(true_p_2)
+            reco_p1_2 = reco_p_2 * (fv2[i].p1 / true_p_2)
+            reco_p2_2 = reco_p_2 * (fv2[i].p2 / true_p_2)
+            reco_p3_2 = reco_p_2 * (fv2[i].p3 / true_p_2)
+            reco_p0_2 = sqrt(reco_p1_2**2 + reco_p2_2**2 + reco_p3_2**2 + mass_daughters**2)
+            fv2[i].set_p4(reco_p0_2, reco_p1_2, reco_p2_2, reco_p3_2)
+
 
         # Apply cuts: e+/e-/gamma < 30 MeV
         if resolved:

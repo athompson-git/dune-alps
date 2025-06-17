@@ -32,6 +32,32 @@ def nuebar_events(enu):
 
 
 
+
+# Energy resolution
+def dune_eres_cauchy(E_true, distribution="gaussian"):
+    # Takes Etrue in MeV, returns reco energies
+    a, b, c = 0.027, 0.024, 0.007
+
+    # Calculate relative energy error, fit inspired by [2503.04432]
+    # modified to asymptote to 2% beyond 1 GeV (optimistic)
+    gamma = E_true * (a + b / sqrt(E_true * 1e-3) + c/(E_true * 1e-3)) / 3
+
+    # Cauchy distribution Quantile function
+    if hasattr(E_true, "__len__"):
+        u_rnd = np.random.uniform(0.0, 1.0, E_true.shape[0])
+    else:
+        u_rnd = np.random.uniform(0.0, 1.0)
+
+    if distribution == "gaussian=":
+        E_reco = E_true + gamma * sqrt(2) * erfinv(2*u_rnd - 1)
+    elif distribution == "cauchy":
+        E_reco = E_true + gamma * tan(pi * (u_rnd - 0.5))
+
+    return E_reco
+
+
+
+
 # Import backgrounds
 def get_1particle_array(datfile, flavor="numu", mass_energy=0.0, efficiency=1.0):
     bkg = np.genfromtxt(datfile)
@@ -82,22 +108,6 @@ def get_2particle_array(datfile, flavor="numu", mass_energy=0.0, efficiency=1.0)
 
 
 
-# Energy resolution
-def dune_eres_cauchy(E_true):
-    # Takes Etrue in MeV, returns reco energies
-    a, b, c = 0.027, 0.024, 0.007
-
-    # Calculate relative energy error, fit inspired by [2503.04432]
-    gamma = E_true * (a * (E_true * 1e-3) + b * sqrt(E_true * 1e-3) + c)
-
-    # Cauchy distribution Quantile function
-    u_rnd = np.random.uniform(0.0, 1.0, E_true.shape[0])
-    E_reco = E_true + gamma * tan(pi * (u_rnd - 0.5))
-
-    return E_reco
-
-
-
 class Background2Particle:
     def __init__(self, data_file_name, nu_flavor, mass_particle_1=0.0, mass_particle_2=0.0,
                  verbose=False):
@@ -120,15 +130,17 @@ class Background2Particle:
             p_mag_1 = sqrt(p1_1*p1_1 + p2_1*p2_1 + p3_1*p3_1)
             p_mag_2 = sqrt(p1_2*p1_2 + p2_2*p2_2 + p3_2*p3_2)
 
-            p1_1 = dune_eres_cauchy(p_mag_1) * (p1_1 / p_mag_1)
-            p2_1 = dune_eres_cauchy(p_mag_1) * (p2_1 / p_mag_1)
-            p3_1 = dune_eres_cauchy(p_mag_1) * (p3_1 / p_mag_1)
+            reco_p1 = dune_eres_cauchy(p_mag_1)
+            p1_1 = reco_p1 * (p1_1 / p_mag_1)
+            p2_1 = reco_p1 * (p2_1 / p_mag_1)
+            p3_1 = reco_p1 * (p3_1 / p_mag_1)
             p_mag_1 = sqrt(p1_1*p1_1 + p2_1*p2_1 + p3_1*p3_1)
             p0_1 = np.sqrt(p_mag_1**2 + mass_particle_1**2)
 
-            p1_2 = dune_eres_cauchy(p_mag_2) * (p1_2 / p_mag_2)
-            p2_2 = dune_eres_cauchy(p_mag_2) * (p2_2 / p_mag_2)
-            p3_2 = dune_eres_cauchy(p_mag_2) * (p3_2 / p_mag_2)
+            reco_p2 = dune_eres_cauchy(p_mag_2)
+            p1_2 = reco_p2 * (p1_2 / p_mag_2)
+            p2_2 = reco_p2 * (p2_2 / p_mag_2)
+            p3_2 = reco_p2 * (p3_2 / p_mag_2)
             p_mag_2 = sqrt(p1_2*p1_2 + p2_2*p2_2 + p3_2*p3_2)
             p0_2 = np.sqrt(p_mag_2**2 + mass_particle_2**2)
 
@@ -204,9 +216,10 @@ class Background1Particle:
 
             p_mag_1 = sqrt(self.p1_1*self.p1_1 + self.p2_1*self.p2_1 + self.p3_1*self.p3_1)
 
-            self.p1_1 = dune_eres_cauchy(p_mag_1) * (self.p1_1 / p_mag_1)
-            self.p2_1 = dune_eres_cauchy(p_mag_1) * (self.p2_1 / p_mag_1)
-            self.p3_1 = dune_eres_cauchy(p_mag_1) * (self.p3_1 / p_mag_1)
+            reco_p = dune_eres_cauchy(p_mag_1)
+            self.p1_1 = reco_p * (self.p1_1 / p_mag_1)
+            self.p2_1 = reco_p * (self.p2_1 / p_mag_1)
+            self.p3_1 = reco_p * (self.p3_1 / p_mag_1)
             p_mag_1 = sqrt(self.p1_1*self.p1_1 + self.p2_1*self.p2_1 + self.p3_1*self.p3_1)
             self.p0_1 = np.sqrt(p_mag_1**2 + mass_particle_1**2)
 
