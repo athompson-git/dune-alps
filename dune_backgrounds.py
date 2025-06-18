@@ -39,8 +39,7 @@ def dune_eres_cauchy(E_true, distribution="gaussian"):
     a, b, c = 0.027, 0.024, 0.007
 
     # Calculate relative energy error, fit inspired by [2503.04432]
-    # modified to asymptote to 2% beyond 1 GeV (optimistic)
-    gamma = E_true * (a + b / sqrt(E_true * 1e-3) + c/(E_true * 1e-3)) / 3
+    gamma = E_true * (a + b / sqrt(E_true * 1e-3) + c/(E_true * 1e-3))
 
     # Cauchy distribution Quantile function
     if hasattr(E_true, "__len__"):
@@ -48,7 +47,7 @@ def dune_eres_cauchy(E_true, distribution="gaussian"):
     else:
         u_rnd = np.random.uniform(0.0, 1.0)
 
-    if distribution == "gaussian=":
+    if distribution == "gaussian":
         E_reco = E_true + gamma * sqrt(2) * erfinv(2*u_rnd - 1)
     elif distribution == "cauchy":
         E_reco = E_true + gamma * tan(pi * (u_rnd - 0.5))
