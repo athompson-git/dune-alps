@@ -39,7 +39,8 @@ def dune_eres_cauchy(E_true, distribution="gaussian"):
     a, b, c = 0.027, 0.024, 0.007
 
     # Calculate relative energy error, fit inspired by [2503.04432]
-    gamma = E_true * (a + b / sqrt(E_true * 1e-3) + c/(E_true * 1e-3))
+    gamma = E_true * np.clip((a + b / sqrt(E_true * 1e-3) + c/(E_true * 1e-3)),
+                             a_min=0.001, a_max=0.15)
 
     # Cauchy distribution Quantile function
     if hasattr(E_true, "__len__"):
@@ -52,7 +53,7 @@ def dune_eres_cauchy(E_true, distribution="gaussian"):
     elif distribution == "cauchy":
         E_reco = E_true + gamma * tan(pi * (u_rnd - 0.5))
 
-    return E_reco
+    return np.clip(E_reco, a_min=0.0, a_max=np.inf)
 
 
 
@@ -186,6 +187,8 @@ class Background2Particle:
             self.dtheta_deg = np.array([-1])
             self.dtheta_rad = np.array([-1])
             self.weights = np.array([0])
+            self.theta_12_deg = np.array([-1])
+            self.theta_12_rad = np.array([-1])
     
     def append_other_bkg(self, other_bkg):
         if not isinstance(other_bkg, Background2Particle):
@@ -198,6 +201,9 @@ class Background2Particle:
         self.dtheta_deg = np.concatenate((self.dtheta_deg, other_bkg.dtheta_deg))
         self.dtheta_rad = np.concatenate((self.dtheta_rad, other_bkg.dtheta_rad))
         self.weights = np.concatenate((self.weights, other_bkg.weights))
+        self.theta_12_deg = np.concatenate((self.theta_12_deg, other_bkg.theta_12_deg))
+        self.theta_12_rad = np.concatenate((self.theta_12_rad, other_bkg.theta_12_rad))
+
 
 
 class Background1Particle:
